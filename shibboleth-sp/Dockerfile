@@ -1,17 +1,15 @@
-FROM centos:centos7
+# Updated: 2024-12 for containerd v2.0+ compatibility (Schema 2 image)
+FROM rockylinux:8
 
-# Based on: https://github.com/jtgasper3/docker-images/blob/master/centos-shib-sp/Dockerfile
+COPY security:shibboleth.repo /etc/yum.repos.d/security:shibboleth.repo
 
-ENV APACHE_VERSION 2.4.6-67.el7.centos.6
-ENV SHIBBOLETH_VERSION 2.6.1-3.1
-RUN yum -y update \
-    && yum -y install wget \
-    && wget http://download.opensuse.org/repositories/security://shibboleth/CentOS_7/security:shibboleth.repo -P /etc/yum.repos.d \
-    && sed -i -e "s/download\./\downloadcontent\./" /etc/yum.repos.d/security\:shibboleth.repo \
-    && yum -y install httpd-${APACHE_VERSION} mod_ssl shibboleth-${SHIBBOLETH_VERSION} \
-    && yum -y clean all
+RUN dnf -y update \
+    && dnf -y install httpd mod_ssl shibboleth \
+    && dnf -y clean all
 
-RUN echo "export LD_LIBRARY_PATH=/opt/shibboleth/lib64:$LD_LIBRARY_PATH" >> /etc/sysconfig/shibd \
+RUN test -d /var/run/lock || mkdir -p /var/run/lock \
+    && test -d /var/lock/subsys/ || mkdir -p /var/lock/subsys/ \
+    && echo "export LD_LIBRARY_PATH=/opt/shibboleth/lib64:$LD_LIBRARY_PATH" >> /etc/sysconfig/shibd \
     && echo "export SHIBD_USER=shibd" >> /etc/sysconfig/shibd \
     && sed -i \
         -e "s|log4j.appender.shibd_log=.*$|log4j.appender.shibd_log=org.apache.log4j.ConsoleAppender|" \
