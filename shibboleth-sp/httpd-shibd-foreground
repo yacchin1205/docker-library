@@ -18,5 +18,9 @@ chown -R $SHIBD_USER:$SHIBD_USER /var/run/shibboleth /var/cache/shibboleth 2>/de
 $shibd -F -f -w $SHIBD_WAIT -u $SHIBD_USER &
 
 # Apache gets grumpy about PID files pre-existing
-rm -f /var/run/apache2/apache2.pid
-exec apachectl -DFOREGROUND
+rm -f /etc/httpd/run/httpd.pid /var/lock/subsys/shibd
+
+# Generate SSL certificates if not exists
+/usr/libexec/httpd-ssl-gencerts
+
+exec httpd -DFOREGROUND
